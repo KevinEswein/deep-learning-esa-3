@@ -1,6 +1,8 @@
 let model;
 let tokenIndex;
 let seqLength = 5;
+let predictionWord
+let autoPredict = true
 
 async function loadData() {
     const response = await fetch('data.txt');
@@ -124,28 +126,33 @@ async function loadModel() {
     document.getElementById('predictButton').addEventListener('click', () => {
         const inputText = document.getElementById('inputText').value.split(' ');
         const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
+        predictionWord = nextWord
         updatePredictions(nextWord);
     });
 
     document.getElementById('acceptButton').addEventListener('click', () => {
         const inputText = document.getElementById('inputText').value.split(' ');
+        document.getElementById('inputText').value += ' ' + predictionWord;
         const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
-        document.getElementById('inputText').value += ' ' + nextWord;
+        predictionWord = nextWord;
         updatePredictions(nextWord);
     });
 
     document.getElementById('autoButton').addEventListener('click', async () => {
+        autoPredict = true
         for (let i = 0; i < 10; i++) {
-            const inputText = document.getElementById('inputText').value.split(' ');
-            const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
-            document.getElementById('inputText').value += ' ' + nextWord;
-            updatePredictions(nextWord);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            if (autoPredict) {
+                const inputText = document.getElementById('inputText').value.split(' ');
+                const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
+                document.getElementById('inputText').value += ' ' + nextWord;
+                updatePredictions(nextWord);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
         }
     });
 
     document.getElementById('stopButton').addEventListener('click', () => {
-        // Implementiere die Logik zum Stoppen der automatischen Vorhersage
+        autoPredict = false
     });
 
     document.getElementById('resetButton').addEventListener('click', () => {
