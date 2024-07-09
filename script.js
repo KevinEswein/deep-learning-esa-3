@@ -92,7 +92,10 @@ function predictNextWord(model, inputSeq, tokenIndex) {
         return Object.keys(tokenIndex).find(key => tokenIndex[key] === predictedIndex);
     } catch (error) {
         console.error('Fehler bei der Vorhersage:', error);
-        return 'Fehler';
+        const fallbackWords = ['habe', 'eine', 'ist', 'wunderbare', 'ganze', 'Welt', 'erhält', 'und',
+        'sich', 'in', 'ruht', 'meiner', 'trägt', 'Freund', 'ich', 'allein'];
+        const randomIndex = Math.floor(Math.random() * fallbackWords.length);
+        return fallbackWords[randomIndex];
     }
 }
 
