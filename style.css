@@ -1,5 +1,6 @@
 body {
     font-family: 'Arial', sans-serif;
+    font-size: 14px;
     background-color: #121212;
     color: #e0e0e0;
     margin: 0;
@@ -7,10 +8,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
 }
 
 .container {
+    margin-top: 20px;
     background: #1e1e1e;
     padding: 20px;
     border-radius: 8px;

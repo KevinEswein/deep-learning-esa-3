@@ -23,6 +23,37 @@
             <button id="resetButton">Reset</button>
         </div>
         <div id="predictions"></div>
+        <div>
+            <h2>Diskussion</h2>
+            In diesem Projekt habe ich ein LSTM-Modell zur Wortvorhersage implementiert und trainiert. Ich habe gelernt,
+            wie man ein Modell in TensorFlow.js erstellt und trainiert. Eine Herausforderung war die Konvertierung der
+            Tokenizer-Logik von Python nach JavaScript. Ich habe auch die Wichtigkeit der WebGL- und CPU-Unterstützung
+            in TensorFlow.js erkannt. Das Modell zeigt gute Ergebnisse bei der Vorhersage von Wörtern basierend auf dem
+            gegebenen Text. Das Ergebnis ist allerdings ernüchternd, aufgrund von sich wiederholenden und sinnfreie
+            angeordneten Wörtern.
+            <h2>Dokumentation</h2>
+            <h3>Technisch</h3>
+            <ul id="technical">
+                <li><strong>TensorFlow.js:</strong> Verwendet zur Erstellung und zum Training des LSTM-Modells direkt im
+                    Browser</li>
+                <li><strong>JavaScript:</strong> Implementierung der Tokenizer-Logik und der gesamten Anwendung</li>
+                <li><strong>HTML & CSS:</strong> Gestaltung der Benutzeroberfläche</li>
+            </ul>
+            <p id="technical-details">
+                Eine technische Besonderheit dieser Lösung ist die vollständige Implementierung des Modells und der
+                Tokenizer-Logik in JavaScript, was es ermöglicht, das Modell direkt im Browser zu trainieren und zu
+                verwenden. Dies macht die Anwendung vollständig clientseitig und erfordert keinen Server.
+            </p>
+
+            <h3>Fachlich</h3>
+            <p id="approach">
+                Die Implementierung der Logik basiert auf einem LSTM-Modell zur Vorhersage des nächsten Wortes. Der Text
+                wird tokenisiert und in Sequenzen umgewandelt, die das Modell trainieren. Das Modell verwendet zwei
+                LSTM-Schichten und eine abschließende Dense-Schicht mit Softmax-Aktivierung zur Vorhersage. Die Daten
+                werden aus einer Textdatei geladen und in Echtzeit im Browser verarbeitet. Quellen umfassen die
+                TensorFlow.js-Dokumentation und verschiedene Online-Ressourcen zur Implementierung von LSTM-Modellen.
+            </p>
+        </div>
     </div>
 </body>
 </html>
