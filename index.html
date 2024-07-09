@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wortvorhersage mit LSTM</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>ESA 3</h1>
+        <h2>Wortvorhersage mit LSTM</h2>
+        <div class="inputTextWrapper">
+            <textarea id="inputText" placeholder="Geben Sie Ihren Text ein..."></textarea>
+        </div>
+        <div class="buttons">
+            <button id="predictButton">Vorhersage</button>
+            <button id="acceptButton">Weiter</button>
+            <button id="autoButton">Auto</button>
+            <button id="stopButton">Stopp</button>
+            <button id="resetButton">Reset</button>
+        </div>
+        <div id="predictions"></div>
+    </div>
+</body>
+</html>
