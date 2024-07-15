@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wortvorhersage mit LSTM</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.5.1/dist/tfjs-vis.umd.min.js"></script>
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -16,43 +17,66 @@
             <textarea id="inputText" placeholder="Geben Sie Ihren Text ein..."></textarea>
         </div>
         <div class="buttons">
-            <button id="predictButton">Vorhersage</button>
-            <button id="acceptButton">Weiter</button>
-            <button id="autoButton">Auto</button>
-            <button id="stopButton">Stopp</button>
+            <button id="trainModelButton">Modell trainieren</button>
+            <button id="predictButton" disabled>Vorhersage</button>
+            <button id="continueButton" disabled>Weiter</button>
+            <button id="autoButton" disabled>Auto</button>
+            <button id="stopButton" disabled>Stopp</button>
             <button id="resetButton">Reset</button>
         </div>
         <div id="predictions"></div>
         <div>
             <h2>Diskussion</h2>
-            In diesem Projekt habe ich ein LSTM-Modell zur Wortvorhersage implementiert und trainiert. Ich habe gelernt,
-            wie man ein Modell in TensorFlow.js erstellt und trainiert. Eine Herausforderung war die Konvertierung der
-            Tokenizer-Logik von Python nach JavaScript. Ich habe auch die Wichtigkeit der WebGL- und CPU-Unterstützung
-            in TensorFlow.js erkannt. Das Modell zeigt gute Ergebnisse bei der Vorhersage von Wörtern basierend auf dem
-            gegebenen Text. Das Ergebnis ist allerdings ernüchternd, aufgrund von sich wiederholenden und sinnfreie
-            angeordneten Wörtern.
+            <p>In diesem Projekt habe ich ein LSTM-Modell zur Wortvorhersage implementiert und trainiert. Ich habe
+                gelernt, wie man ein Modell in TensorFlow.js erstellt und trainiert. Eine Herausforderung war die
+                Konvertierung der Tokenizer-Logik von Python nach JavaScript sowie die effiziente Handhabung großer
+                Textdaten im Browser. Ich habe auch die Wichtigkeit der WebGL- und CPU-Unterstützung in TensorFlow.js
+                erkannt. Das Modell zeigt gute Ergebnisse bei der Vorhersage von Wörtern basierend auf dem gegebenen
+                Text. Das Ergebnis ist jedoch teilweise ernüchternd, da sich die Vorhersagen oft wiederholen und
+                manchmal sinnfrei angeordnet sind. Dies deutet darauf hin, dass das Modell möglicherweise weiter
+                trainiert oder mit mehr Daten versorgt werden muss, um die Vorhersagequalität zu verbessern.</p>
             <h2>Dokumentation</h2>
             <h3>Technisch</h3>
             <ul id="technical">
-                <li><strong>TensorFlow.js:</strong> Verwendet zur Erstellung und zum Training des LSTM-Modells direkt im
-                    Browser</li>
-                <li><strong>JavaScript:</strong> Implementierung der Tokenizer-Logik und der gesamten Anwendung</li>
-                <li><strong>HTML & CSS:</strong> Gestaltung der Benutzeroberfläche</li>
+                <li><b>TensorFlow.js:</b> Verwendet zur Erstellung und zum Training des LSTM-Modells direkt im
+                    Browser, was die Notwendigkeit eines Servers eliminiert und die Anwendung vollständig clientseitig
+                    macht.</li>
+                <li><b>JavaScript:</b> Implementierung der Tokenizer-Logik, der Modellarchitektur und der
+                    gesamten Anwendung. Die Tokenizer-Logik wurde von Python nach JavaScript konvertiert, um die
+                    Datenverarbeitung im Browser zu ermöglichen.</li>
+                <li><b>HTML & CSS:</b> Gestaltung der Benutzeroberfläche, um eine benutzerfreundliche
+                    Interaktion zu gewährleisten. Die Buttons und Textfelder ermöglichen es dem Nutzer, das Modell zu
+                    trainieren, Vorhersagen zu machen und den Text automatisch zu erweitern.</li>
             </ul>
-            <p id="technical-details">
-                Eine technische Besonderheit dieser Lösung ist die vollständige Implementierung des Modells und der
-                Tokenizer-Logik in JavaScript, was es ermöglicht, das Modell direkt im Browser zu trainieren und zu
-                verwenden. Dies macht die Anwendung vollständig clientseitig und erfordert keinen Server.
-            </p>
-
+            <p id="technical-details">Eine technische Besonderheit dieser Lösung ist die vollständige Implementierung
+                des Modells und der Tokenizer-Logik in JavaScript, was es ermöglicht, das Modell direkt im Browser zu
+                trainieren und zu verwenden. Dies macht die Anwendung vollständig clientseitig und erfordert keinen
+                Server.</p>
             <h3>Fachlich</h3>
-            <p id="approach">
-                Die Implementierung der Logik basiert auf einem LSTM-Modell zur Vorhersage des nächsten Wortes. Der Text
-                wird tokenisiert und in Sequenzen umgewandelt, die das Modell trainieren. Das Modell verwendet zwei
-                LSTM-Schichten und eine abschließende Dense-Schicht mit Softmax-Aktivierung zur Vorhersage. Die Daten
-                werden aus einer Textdatei geladen und in Echtzeit im Browser verarbeitet. Quellen umfassen die
-                TensorFlow.js-Dokumentation und verschiedene Online-Ressourcen zur Implementierung von LSTM-Modellen.
-            </p>
+            <p id="approach">Die Implementierung der Logik basiert auf einem LSTM-Modell zur Vorhersage des nächsten
+                Wortes. Der Text wird tokenisiert und in Sequenzen umgewandelt, die das Modell trainieren. Das Modell
+                verwendet zwei LSTM-Schichten und eine abschließende Dense-Schicht mit Softmax-Aktivierung zur
+                Vorhersage. Die Daten werden aus einer Textdatei geladen und in Echtzeit im Browser verarbeitet. Quellen
+                umfassen die TensorFlow.js-Dokumentation und verschiedene Online-Ressourcen zur Implementierung von
+                LSTM-Modellen.</p>
+            <b>Netzwerkarchitektur</b>
+            <ul>
+                <li><b>Embedding Layer:</b> Wandelt Wörter in dichte Vektoren um.</li>
+                <li><b>LSTM Layer 1:</b> Erste LSTM-Schicht mit 100 Einheiten und Rückgabe der Sequenzen.</li>
+                <li><b>LSTM Layer 2:</b> Zweite LSTM-Schicht mit 100 Einheiten.</li>
+                <li><b>Dense Layer:</b> Vollständig verbundene Schicht mit Softmax-Aktivierung zur Vorhersage der
+                    Wahrscheinlichkeiten für jedes Wort im Vokabular.</li>
+            </ul>
+
+            <b>Optimierung</b>
+            <ul>
+                <li><b>Loss Function:</b> Categorical Cross-Entropy Loss, geeignet für Multi-Class Klassifikationsprobleme.</li>
+                <li><b>Optimizer:</b> Adam Optimizer mit einer Lernrate von 0.01, um schnelle Konvergenz zu erreichen.</li>
+                <li><b>Batch Size:</b> 32, um eine Balance zwischen Trainingsgeschwindigkeit und Speicherverbrauch zu
+                    gewährleisten.</li>
+                <li><b>Epochen:</b>Das Modell wurde über 20 Epochen trainiert, wobei die Trainingsleistung und
+                    Genauigkeit überwacht wurden.</li>
+            </ul>
         </div>
     </div>
 </body>

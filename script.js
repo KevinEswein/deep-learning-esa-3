@@ -1,167 +1,136 @@
 let model;
-let tokenIndex;
-let seqLength = 5;
-let predictionWord
-let autoPredict = true
+let wordIndex = {};
+let indexWord = {};
+let allWords = [];
+let maxLength = 10;
+let autoPredict = false;
 
 async function loadData() {
     const response = await fetch('data.txt');
-    const data = await response.text();
-    return data.split(' ');
+    const text = await response.text();
+    allWords = text.split(/\s+/);
+    createWordIndex(allWords);
 }
 
-function createSequences(data, seqLength) {
-    const sequences = [];
-    for (let i = 0; i < data.length - seqLength; i++) {
-        sequences.push(data.slice(i, i + seqLength + 1));
-    }
-    return sequences;
-}
-
-function createTokenIndex(data) {
-    const uniqueTokens = Array.from(new Set(data));
-    const tokenIndex = {};
-    uniqueTokens.forEach((token, index) => {
-        tokenIndex[token] = index;
+function createWordIndex(words) {
+    const uniqueWords = [...new Set(words)];
+    uniqueWords.forEach((word, index) => {
+        wordIndex[word] = index + 1;
+        indexWord[index + 1] = word;
     });
-    return tokenIndex;
 }
 
-function createModel(vocabSize) {
-    const model = tf.sequential();
-    model.add(tf.layers.lstm({
-        units: 100,
-        returnSequences: true,
-        inputShape: [null, vocabSize],
-        kernelInitializer: 'glorotUniform'
-    }));
-    model.add(tf.layers.lstm({
-        units: 100,
-        kernelInitializer: 'glorotUniform'
-    }));
-    model.add(tf.layers.dense({
-        units: vocabSize,
-        activation: 'softmax',
-        kernelInitializer: 'glorotUniform'
-    }));
+function createModel() {
+    model = tf.sequential();
+    model.add(tf.layers.embedding({ inputDim: Object.keys(wordIndex).length + 1, outputDim: 100, inputLength: maxLength }));
+    model.add(tf.layers.lstm({ units: 100, returnSequences: true, kernelInitializer: 'glorotUniform' }));
+    model.add(tf.layers.lstm({ units: 100, kernelInitializer: 'glorotUniform' }));
+    model.add(tf.layers.dense({ units: Object.keys(wordIndex).length + 1, activation: 'softmax' }));
     model.compile({
+        loss: 'categoricalCrossentropy',
         optimizer: tf.train.adam(0.01),
-        loss: 'categoricalCrossentropy'
-    });
-    return model;
-}
-
-async function prepareData(seqLength) {
-    const data = await loadData();
-    tokenIndex = createTokenIndex(data);
-    const sequences = createSequences(data, seqLength);
-    const vocabSize = Object.keys(tokenIndex).length;
-
-    const X = [];
-    const y = [];
-    sequences.forEach(seq => {
-        const inputSeq = seq.slice(0, seqLength).map(token => tokenIndex[token]);
-        const outputToken = tokenIndex[seq[seqLength]];
-        X.push(tf.oneHot(inputSeq, vocabSize));
-        y.push(tf.oneHot(outputToken, vocabSize));
-    });
-
-    return {
-        X: tf.stack(X),
-        y: tf.stack(y),
-        vocabSize
-    };
-}
-
-async function trainModel(model, X, y) {
-    await model.fit(X, y, {
-        epochs: 50,
-        batchSize: 32
+        metrics: ['accuracy']
     });
 }
 
-function predictNextWord(model, inputSeq, tokenIndex) {
-    try {
-        const inputTokens = inputSeq.map(token => {
-            if (!(token in tokenIndex)) {
-                throw new Error(`Token "${token}" nicht im Token-Index gefunden.`);
-            }
-            return tokenIndex[token];
-        });
-        const inputTensor = tf.oneHot(inputTokens, Object.keys(tokenIndex).length).expandDims(0);
-        const prediction = model.predict(inputTensor);
-        const predictedIndex = prediction.argMax(-1).dataSync()[0];
-        return Object.keys(tokenIndex).find(key => tokenIndex[key] === predictedIndex);
-    } catch (error) {
-        console.error('Fehler bei der Vorhersage:', error);
-        const fallbackWords = ['habe', 'eine', 'ist', 'wunderbare', 'ganze', 'Welt', 'erhält', 'und',
-        'sich', 'in', 'ruht', 'meiner', 'trägt', 'Freund', 'ich', 'allein'];
-        const randomIndex = Math.floor(Math.random() * fallbackWords.length);
-        return fallbackWords[randomIndex];
-    }
-}
-
-async function saveModel(model) {
-    await model.save('localstorage://my-model');
-}
-
-async function loadModel() {
-    return await tf.loadLayersModel('localstorage://my-model');
-}
-
-(async function () {
-    const modelExists = await tf.io.listModels().then(models => 'localstorage://my-model' in models);
-
-    if (modelExists) {
-        model = await loadModel();
-        console.log('Modell aus dem lokalen Speicher geladen.');
-    } else {
-        const {X, y, vocabSize} = await prepareData(seqLength);
-        model = createModel(vocabSize);
-        await trainModel(model, X, y);
-        await saveModel(model);
-        console.log('Modell trainiert und gespeichert.');
+async function trainModel() {
+    createModel();
+    const sequences = [];
+    const nextWords = [];
+    for (let i = 0; i < allWords.length - maxLength; i++) {
+        sequences.push(allWords.slice(i, i + maxLength));
+        nextWords.push(allWords[i + maxLength]);
     }
 
-    document.getElementById('predictButton').addEventListener('click', () => {
-        const inputText = document.getElementById('inputText').value.split(' ');
-        const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
-        predictionWord = nextWord
-        updatePredictions(nextWord);
+    const xs = sequences.map(seq => seq.map(word => wordIndex[word] || 0));
+    const ys = nextWords.map(word => wordIndex[word] || 0);
+
+    const xsTensor = tf.tensor2d(xs);
+    const ysTensor = tf.oneHot(tf.tensor1d(ys, 'int32'), Object.keys(wordIndex).length + 1);
+
+    await model.fit(xsTensor, ysTensor, {
+        epochs: 30,
+        batchSize: 32,
+        shuffle: true,
+        callbacks: tfvis.show.fitCallbacks(
+            { name: 'Training Performance' },
+            ['loss', 'acc'],
+            { height: 200, callbacks: ['onEpochEnd'] }
+        )
     });
 
-    document.getElementById('acceptButton').addEventListener('click', () => {
-        const inputText = document.getElementById('inputText').value.split(' ');
-        document.getElementById('inputText').value += ' ' + predictionWord;
-        const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
-        predictionWord = nextWord;
-        updatePredictions(nextWord);
-    });
+    xsTensor.dispose();
+    ysTensor.dispose();
+    document.getElementById('predictButton').disabled = false;
+    document.getElementById('continueButton').disabled = false;
+    document.getElementById('autoButton').disabled = false;
+    document.getElementById('stopButton').disabled = false;
+}
 
-    document.getElementById('autoButton').addEventListener('click', async () => {
-        autoPredict = true
-        for (let i = 0; i < 10; i++) {
-            if (autoPredict) {
-                const inputText = document.getElementById('inputText').value.split(' ');
-                const nextWord = predictNextWord(model, inputText.slice(-seqLength), tokenIndex);
-                document.getElementById('inputText').value += ' ' + nextWord;
-                updatePredictions(nextWord);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-        }
-    });
+function predictNextWord(inputText) {
+    const inputWords = inputText.trim().split(/\s+/);
+    const inputSeq = inputWords.slice(-maxLength).map(word => wordIndex[word] || 0);
+    const paddedSeq = Array(maxLength - inputSeq.length).fill(0).concat(inputSeq);
+    const inputTensor = tf.tensor2d([paddedSeq]);
 
-    document.getElementById('stopButton').addEventListener('click', () => {
-        autoPredict = false
-    });
+    const prediction = model.predict(inputTensor);
+    const predictedIndex = prediction.argMax(-1).dataSync()[0];
+    const predictedWord = indexWord[predictedIndex];
 
-    document.getElementById('resetButton').addEventListener('click', () => {
-        document.getElementById('inputText').value = '';
-        document.getElementById('predictions').innerText = '';
-    });
+    return predictedWord;
+}
 
-    function updatePredictions(nextWord) {
-        const predictionsDiv = document.getElementById('predictions');
-        predictionsDiv.innerText = `Nächstes Wort: ${nextWord}`;
+document.getElementById('trainModelButton').addEventListener('click', async () => {
+    await loadData();
+    await trainModel();
+});
+
+document.getElementById('predictButton').addEventListener('click', () => {
+    const inputText = document.getElementById('inputText').value;
+    const predictedWord = predictNextWord(inputText);
+    displayPredictions([predictedWord]);
+});
+
+document.getElementById('continueButton').addEventListener('click', () => {
+    const inputText = document.getElementById('inputText').value;
+    const predictedWord = predictNextWord(inputText);
+    displayPredictions([predictedWord]);
+    document.getElementById('inputText').value = inputText + ' ' + predictedWord;
+});
+
+document.getElementById('autoButton').addEventListener('click', () => {
+    autoPredict = true;
+    autoPredictWords();
+});
+
+document.getElementById('stopButton').addEventListener('click', () => {
+    autoPredict = false;
+});
+
+document.getElementById('resetButton').addEventListener('click', () => {
+    document.getElementById('inputText').value = '';
+    document.getElementById('predictions').innerHTML = '';
+});
+
+function displayPredictions(predictions) {
+    const predictionsDiv = document.getElementById('predictions');
+    predictionsDiv.innerHTML = '';
+    predictions.forEach(prediction => {
+        const button = document.createElement('button');
+        button.textContent = prediction;
+        button.onclick = () => {
+            document.getElementById('inputText').value += ' ' + prediction;
+        };
+        predictionsDiv.appendChild(button);
+    });
+}
+
+async function autoPredictWords() {
+    while (autoPredict) {
+        const inputText = document.getElementById('inputText').value;
+        const predictedWord = predictNextWord(inputText);
+        document.getElementById('inputText').value += ' ' + predictedWord;
+        displayPredictions([predictedWord]);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Warte 500ms zwischen den Vorhersagen
     }
-})();
+}
